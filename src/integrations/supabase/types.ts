@@ -14,7 +14,293 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          kind: string
+          message_text: string | null
+          order_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          kind?: string
+          message_text?: string | null
+          order_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          kind?: string
+          message_text?: string | null
+          order_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_chat_hub"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutritionists: {
+        Row: {
+          bio: string | null
+          cnp: string | null
+          contact_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          photo_url: string | null
+          specialty: string | null
+        }
+        Insert: {
+          bio?: string | null
+          cnp?: string | null
+          contact_url?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          photo_url?: string | null
+          specialty?: string | null
+        }
+        Update: {
+          bio?: string | null
+          cnp?: string | null
+          contact_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          photo_url?: string | null
+          specialty?: string | null
+        }
+        Relationships: []
+      }
+      orders_chat_hub: {
+        Row: {
+          base_price: number | null
+          client_id: string
+          created_at: string
+          customized_recipe: Json | null
+          dish_id: string | null
+          dish_name: string | null
+          final_price: number | null
+          health_tags: string[]
+          id: string
+          is_premium_custom: boolean
+          restaurant_id: string
+          status: Database["public"]["Enums"]["order_status"]
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number | null
+          client_id: string
+          created_at?: string
+          customized_recipe?: Json | null
+          dish_id?: string | null
+          dish_name?: string | null
+          final_price?: number | null
+          health_tags?: string[]
+          id?: string
+          is_premium_custom?: boolean
+          restaurant_id: string
+          status?: Database["public"]["Enums"]["order_status"]
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number | null
+          client_id?: string
+          created_at?: string
+          customized_recipe?: Json | null
+          dish_id?: string | null
+          dish_name?: string | null
+          final_price?: number | null
+          health_tags?: string[]
+          id?: string
+          is_premium_custom?: boolean
+          restaurant_id?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_chat_hub_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_chat_hub_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_dishes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_chat_hub_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          badges: string[]
+          created_at: string
+          diets: string[]
+          fitness_goal: string | null
+          full_name: string | null
+          id: string
+          medical_restrictions: string[]
+          onboarding_complete: boolean
+          points: number
+          role: Database["public"]["Enums"]["app_role"]
+          safety_meals_ordered: number
+          tier: Database["public"]["Enums"]["user_tier"]
+          updated_at: string
+        }
+        Insert: {
+          badges?: string[]
+          created_at?: string
+          diets?: string[]
+          fitness_goal?: string | null
+          full_name?: string | null
+          id: string
+          medical_restrictions?: string[]
+          onboarding_complete?: boolean
+          points?: number
+          role?: Database["public"]["Enums"]["app_role"]
+          safety_meals_ordered?: number
+          tier?: Database["public"]["Enums"]["user_tier"]
+          updated_at?: string
+        }
+        Update: {
+          badges?: string[]
+          created_at?: string
+          diets?: string[]
+          fitness_goal?: string | null
+          full_name?: string | null
+          id?: string
+          medical_restrictions?: string[]
+          onboarding_complete?: boolean
+          points?: number
+          role?: Database["public"]["Enums"]["app_role"]
+          safety_meals_ordered?: number
+          tier?: Database["public"]["Enums"]["user_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      restaurant_dishes: {
+        Row: {
+          base_price: number
+          created_at: string
+          description: string | null
+          dish_name: string
+          health_tags: string[]
+          id: string
+          image_url: string | null
+          restaurant_id: string
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          description?: string | null
+          dish_name: string
+          health_tags?: string[]
+          id?: string
+          image_url?: string | null
+          restaurant_id: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          description?: string | null
+          dish_name?: string
+          health_tags?: string[]
+          id?: string
+          image_url?: string | null
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_dishes_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurants_metadata: {
+        Row: {
+          badges: string[]
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          points: number
+          qr_url: string | null
+          specific_counters: Json
+          successful_delivery_rate: number
+          total_orders_completed: number
+        }
+        Insert: {
+          badges?: string[]
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id: string
+          name: string
+          points?: number
+          qr_url?: string | null
+          specific_counters?: Json
+          successful_delivery_rate?: number
+          total_orders_completed?: number
+        }
+        Update: {
+          badges?: string[]
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          points?: number
+          qr_url?: string | null
+          specific_counters?: Json
+          successful_delivery_rate?: number
+          total_orders_completed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_metadata_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +309,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role: "usuario" | "restaurante"
+      order_status:
+        | "chat_activo"
+        | "pendiente_pago"
+        | "esperando_validacion"
+        | "pago_confirmado"
+        | "en_preparacion"
+        | "preparando"
+        | "listo_para_enviar"
+        | "entregado"
+        | "cancelado"
+      user_tier: "freemium" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +447,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["usuario", "restaurante"],
+      order_status: [
+        "chat_activo",
+        "pendiente_pago",
+        "esperando_validacion",
+        "pago_confirmado",
+        "en_preparacion",
+        "preparando",
+        "listo_para_enviar",
+        "entregado",
+        "cancelado",
+      ],
+      user_tier: ["freemium", "premium"],
+    },
   },
 } as const
