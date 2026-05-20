@@ -12,6 +12,7 @@ function HomeRedirect() {
   const effective = profile.role;
 
   if (effective === "restaurante") return <Navigate to="/dashboard" />;
+  if (effective === "admin") return <Navigate to="/admin" />;
   if (!profile.onboarding_complete) return <Navigate to="/onboarding" />;
   return <Navigate to="/discover" />;
 }

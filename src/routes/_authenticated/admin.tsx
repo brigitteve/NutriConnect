@@ -1,10 +1,10 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useDemoStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CheckCircle, Clock } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -14,6 +14,30 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminPage() {
   const { profile } = useAuth();
   const view = profile?.role;
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchLeads = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("nutritionist_leads")
+      .select("*")
+      .eq("status", "pendiente_revision");
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setLeads(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (view === "admin") {
+      fetchLeads();
+    }
+  }, [view]);
+
   if (view !== "admin") return <Navigate to="/home" />;
 
   const activateLead = async (lead: any) => {
@@ -47,34 +71,38 @@ function AdminPage() {
       <h1 className="font-display text-3xl font-semibold">Panel Administrativo B2B</h1>
       <p className="mt-1 text-sm text-muted-foreground">Validación de pagos de membresía de Nutricionistas.</p>
 
-      <div className="mt-8 grid gap-4">
-        {leads.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            No hay solicitudes pendientes de revisión.
-          </div>
-        )}
-        {leads.map((lead) => (
-          <div key={lead.id} className="flex items-center justify-between rounded-3xl border border-border bg-card p-5">
-            <div className="flex items-center gap-4">
-              <div 
-                className="h-16 w-16 rounded-2xl bg-muted"
-                style={{ backgroundImage: lead.profile_image_url ? `url(${lead.profile_image_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
-              />
-              <div>
-                <h3 className="font-display text-lg font-semibold">{lead.full_name}</h3>
-                <div className="text-sm text-muted-foreground">CNP: {lead.cnp_code} · {lead.specialty}</div>
-                <div className="mt-1 flex items-center gap-1 text-xs text-warning">
-                  <Clock className="h-3 w-3" /> Pendiente de Validación
+      {loading ? (
+        <div className="mt-8 text-center text-sm text-muted-foreground">Cargando solicitudes…</div>
+      ) : (
+        <div className="mt-8 grid gap-4">
+          {leads.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
+              No hay solicitudes pendientes de revisión.
+            </div>
+          )}
+          {leads.map((lead) => (
+            <div key={lead.id} className="flex items-center justify-between rounded-3xl border border-border bg-card p-5">
+              <div className="flex items-center gap-4">
+                <div 
+                  className="h-16 w-16 rounded-2xl bg-muted"
+                  style={{ backgroundImage: lead.profile_image_url ? `url(${lead.profile_image_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+                />
+                <div>
+                  <h3 className="font-display text-lg font-semibold">{lead.full_name}</h3>
+                  <div className="text-sm text-muted-foreground">CNP: {lead.cnp_code} · {lead.specialty}</div>
+                  <div className="mt-1 flex items-center gap-1 text-xs text-warning">
+                    <Clock className="h-3 w-3" /> Pendiente de Validación
+                  </div>
                 </div>
               </div>
+              <Button onClick={() => activateLead(lead)} className="rounded-full bg-success text-success-foreground hover:bg-success/90">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Validar Pago y Activar
+              </Button>
             </div>
-            <Button onClick={() => activateLead(lead)} className="rounded-full bg-success text-success-foreground hover:bg-success/90">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Validar Pago y Activar
-            </Button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

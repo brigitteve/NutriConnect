@@ -189,61 +189,68 @@ function DishRow({
   const [specs, setSpecs] = useState("");
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-border bg-card">
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-display text-lg font-semibold">{d.dish_name}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+    <div className="overflow-hidden rounded-3xl border border-border bg-card flex flex-col justify-between">
+      <div>
+        {d.image_url && (
+          <div className="aspect-[16/9] w-full bg-muted overflow-hidden border-b border-border">
+            <img src={d.image_url} alt={d.dish_name} className="h-full w-full object-cover" />
           </div>
-          <div className="text-right">
-            <div className="font-display text-xl font-semibold">S/ {Number(d.base_price).toFixed(2)}</div>
-            <div className="text-[10px] uppercase text-muted-foreground">precio base</div>
+        )}
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-display text-lg font-semibold">{d.dish_name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-xl font-semibold">S/ {Number(d.base_price).toFixed(2)}</div>
+              <div className="text-[10px] uppercase text-muted-foreground">precio base</div>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1">
+            {d.health_tags.map((t) => (
+              <span key={t} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium">{TAG_LABELS[t] ?? t}</span>
+            ))}
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-1">
-          {d.health_tags.map((t) => (
-            <span key={t} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium">{TAG_LABELS[t] ?? t}</span>
-          ))}
-        </div>
+      </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={onFreemium} className="rounded-full">
-            <ShoppingCart className="mr-1.5 h-4 w-4" /> Realizar pedido
-          </Button>
+      <div className="p-5 pt-0 flex flex-wrap gap-2">
+        <Button onClick={onFreemium} className="rounded-full">
+          <ShoppingCart className="mr-1.5 h-4 w-4" /> Realizar pedido
+        </Button>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant={isPremium ? "outline" : "ghost"} disabled={!isPremium} className="rounded-full">
-                <Sparkles className="mr-1.5 h-4 w-4" />
-                {isPremium ? "Personalizar (Premium)" : "Personalizar requiere Premium"}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Personaliza tu pedido</DialogTitle></DialogHeader>
-              <p className="text-xs text-muted-foreground">
-                El restaurante revisará tu solicitud y fijará un precio basado en el peso y los insumos.
-              </p>
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label>Porciones</Label>
-                  <Input type="number" min={1} max={10} value={portions} onChange={(e) => setPortions(Number(e.target.value))} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Especificaciones según tus objetivos</Label>
-                  <Textarea
-                    placeholder="Ej: doble proteína, sin aceite, arroz integral en lugar de blanco, 150g de quinoa exactos…"
-                    value={specs}
-                    onChange={(e) => setSpecs(e.target.value)}
-                  />
-                </div>
-                <Button className="w-full" onClick={() => onPremium({ portions, specs })}>
-                  Enviar pedido personalizado
-                </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant={isPremium ? "outline" : "ghost"} disabled={!isPremium} className="rounded-full">
+              <Sparkles className="mr-1.5 h-4 w-4" />
+              {isPremium ? "Personalizar (Premium)" : "Personalizar requiere Premium"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Personaliza tu pedido</DialogTitle></DialogHeader>
+            <p className="text-xs text-muted-foreground">
+              El restaurante revisará tu solicitud y fijará un precio basado en el peso y los insumos.
+            </p>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Porciones</Label>
+                <Input type="number" min={1} max={10} value={portions} onChange={(e) => setPortions(Number(e.target.value))} />
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <div className="space-y-1.5">
+                <Label>Especificaciones según tus objetivos</Label>
+                <Textarea
+                  placeholder="Ej: doble proteína, sin aceite, arroz integral en lugar de blanco, 150g de quinoa exactos…"
+                  value={specs}
+                  onChange={(e) => setSpecs(e.target.value)}
+                />
+              </div>
+              <Button className="w-full" onClick={() => onPremium({ portions, specs })}>
+                Enviar pedido personalizado
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

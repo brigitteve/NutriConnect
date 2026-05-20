@@ -32,6 +32,11 @@ function OnboardingPage() {
     return null;
   }
 
+  if (profile?.role === "admin") {
+    navigate({ to: "/admin" });
+    return null;
+  }
+
   const toggle = (arr: string[], v: string) =>
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
