@@ -38,12 +38,8 @@ interface Message {
 
 const NEXT_STAGE: Record<OrderStatus, OrderStatus | null> = {
   chat_activo: "pendiente_pago",
-  pendiente_pago: "esperando_validacion",
-  esperando_validacion: "pago_confirmado",
-  pago_confirmado: "en_preparacion",
-  en_preparacion: "preparando",
-  preparando: "listo_para_enviar",
-  listo_para_enviar: "entregado",
+  pendiente_pago: "en_cocina",
+  en_cocina: "entregado",
   entregado: null,
   cancelado: null,
 };
@@ -124,15 +120,15 @@ function OrderPage() {
       kind,
       message_text: kind === "qr" ? "Código QR de cobro" : kind === "voucher" ? "Comprobante de pago" : null,
     });
-    if (kind === "voucher" && isClient) {
-      await supabase.from("orders_chat_hub").update({ status: "esperando_validacion" }).eq("id", order.id);
-    }
     toast.success("Adjunto enviado");
   };
 
   const setPrice = async () => {
     const p = Number(priceInput);
     if (!p || p <= 0) return toast.error("Precio inválido");
+
+    const { data: meta } = await supabase.from("restaurants_metadata").select("qr_url").eq("id", profile.id).maybeSingle();
+
     await supabase
       .from("orders_chat_hub")
       .update({ final_price: p, status: "pendiente_pago" })
@@ -143,18 +139,29 @@ function OrderPage() {
       message_text: `💰 Precio fijado: S/ ${p.toFixed(2)}. Esperando pago.`,
       kind: "system",
     });
+
+    if (meta?.qr_url) {
+      await supabase.from("chat_messages").insert({
+        order_id: order.id,
+        sender_id: profile.id,
+        image_url: meta.qr_url,
+        message_text: "Código QR de cobro (Automático)",
+        kind: "qr",
+      });
+    }
+
     setPriceInput("");
   };
 
-  const acceptRecipe = async () => {
+  const acceptPayment = async () => {
     await supabase
       .from("orders_chat_hub")
-      .update({ status: "pago_confirmado" })
+      .update({ status: "en_cocina" })
       .eq("id", order.id);
     await supabase.from("chat_messages").insert({
       order_id: order.id,
       sender_id: profile.id,
-      message_text: "✅ Receta aceptada. Pago confirmado. Comenzamos preparación.",
+      message_text: "✅ Pago confirmado. El plato está en preparación.",
       kind: "system",
     });
     toast.success("Pago confirmado. Pipeline activado.");
@@ -167,7 +174,7 @@ function OrderPage() {
     await supabase.from("chat_messages").insert({
       order_id: order.id,
       sender_id: profile.id,
-      message_text: `➡️ Estado: ${next.replaceAll("_", " ")}`,
+      message_text: `➡️ Estado: ${next === "entregado" ? "Entregado" : "En Cocina"}`,
       kind: "system",
     });
     if (next === "entregado") toast.success("¡Entregado! Puntos y métricas actualizados.");
@@ -228,20 +235,17 @@ function OrderPage() {
                   value={priceInput}
                   onChange={(e) => setPriceInput(e.target.value)}
                 />
-                <Button onClick={setPrice} className="rounded-full">Fijar precio</Button>
+                <Button onClick={setPrice} className="rounded-full">Enviar Cotización</Button>
               </div>
             )}
-            <Button variant="outline" className="rounded-full" onClick={() => { setUploadKind("qr"); fileRef.current?.click(); }}>
-              <QrCode className="mr-1.5 h-4 w-4" /> Subir QR de cobro
-            </Button>
-            {order.status === "esperando_validacion" && (
-              <Button onClick={acceptRecipe} className="rounded-full bg-success text-success-foreground hover:bg-success/90">
-                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Aceptar receta
+            {order.status === "pendiente_pago" && (
+              <Button onClick={acceptPayment} className="rounded-full bg-success text-success-foreground hover:bg-success/90">
+                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Confirmar Pago e Iniciar Cocina
               </Button>
             )}
-            {NEXT_STAGE[order.status] && order.status !== "esperando_validacion" && order.status !== "pendiente_pago" && order.status !== "chat_activo" && (
-              <Button onClick={advance} variant="outline" className="rounded-full">
-                Avanzar a {NEXT_STAGE[order.status]!.replaceAll("_", " ")} <ArrowRight className="ml-1.5 h-4 w-4" />
+            {order.status === "en_cocina" && (
+              <Button onClick={advance} variant="outline" className="rounded-full border-success text-success hover:bg-success/10">
+                📦 Despachar Pedido
               </Button>
             )}
             {order.status !== "entregado" && order.status !== "cancelado" && (

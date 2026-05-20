@@ -10,7 +10,7 @@ export function Header() {
   const navigate = useNavigate();
 
   const effectiveRole =
-    view === "cliente" ? "usuario" : view === "restaurante" ? "restaurante" : profile?.role;
+    view === "cliente" ? "usuario" : view === "restaurante" ? "restaurante" : view === "admin" ? "admin" : profile?.role;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -30,13 +30,17 @@ export function Header() {
                 <NavLink to="/orders">Mis Pedidos</NavLink>
                 {profile?.tier === "premium" && <NavLink to="/nutritionists">Nutricionistas</NavLink>}
               </>
-            ) : (
+            ) : effectiveRole === "restaurante" ? (
               <>
                 <NavLink to="/dashboard">Panel</NavLink>
                 <NavLink to="/dishes">Mi Carta</NavLink>
                 <NavLink to="/incoming">Pedidos</NavLink>
               </>
-            )}
+            ) : effectiveRole === "admin" ? (
+              <>
+                <NavLink to="/admin">Panel Admin B2B</NavLink>
+              </>
+            ) : null}
           </nav>
         )}
 
@@ -68,6 +72,19 @@ export function Header() {
                 }`}
               >
                 Restaurante
+              </button>
+              <button
+                onClick={() => {
+                  setView("admin");
+                  navigate({ to: "/admin" });
+                }}
+                className={`rounded-full px-3 py-1 transition ${
+                  effectiveRole === "admin"
+                    ? "bg-destructive text-destructive-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Admin
               </button>
             </div>
           )}

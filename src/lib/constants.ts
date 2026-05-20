@@ -30,21 +30,13 @@ export const TAG_LABELS: Record<string, string> = {
 
 export const ORDER_STAGES = [
   { id: "pendiente_pago", label: "Pendiente de Pago" },
-  { id: "esperando_validacion", label: "Esperando Validación" },
-  { id: "pago_confirmado", label: "Pago Confirmado" },
-  { id: "en_preparacion", label: "En Preparación" },
-  { id: "preparando", label: "Preparando" },
-  { id: "listo_para_enviar", label: "Listo para Enviar" },
+  { id: "en_cocina", label: "En Cocina / Preparando" },
   { id: "entregado", label: "Entregado" },
 ] as const;
 
 export type OrderStatus =
   | "chat_activo"
   | "pendiente_pago"
-  | "esperando_validacion"
-  | "pago_confirmado"
-  | "en_preparacion"
-  | "preparando"
-  | "listo_para_enviar"
+  | "en_cocina"
   | "entregado"
   | "cancelado";

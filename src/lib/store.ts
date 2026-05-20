@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type DemoView = "auto" | "cliente" | "restaurante";
+type DemoView = "auto" | "cliente" | "restaurante" | "admin";
 
 interface DemoState {
   view: DemoView;

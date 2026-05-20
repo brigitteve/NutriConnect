@@ -82,6 +82,14 @@ function SignupPage() {
       <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta? <Link to="/login" className="font-medium text-primary hover:underline">Entra</Link>
       </p>
+
+      <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center">
+        <h3 className="font-semibold text-primary">💼 ¿Eres Nutricionista?</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Únete a nuestra red de aliados y capta clientes Premium.</p>
+        <Button asChild variant="outline" size="sm" className="mt-3 rounded-full border-primary/20 hover:bg-primary/10 text-primary">
+          <Link to="/b2b-nutritionists">Ver beneficios</Link>
+        </Button>
+      </div>
     </div>
   );
 }
