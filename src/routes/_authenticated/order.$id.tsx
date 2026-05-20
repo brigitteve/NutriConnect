@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -47,12 +47,14 @@ const NEXT_STAGE: Record<OrderStatus, OrderStatus | null> = {
 function OrderPage() {
   const { id } = Route.useParams();
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [priceInput, setPriceInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadKind, setUploadKind] = useState<"qr" | "voucher" | "image">("image");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const listEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,7 +111,7 @@ function OrderPage() {
   };
 
   const uploadFile = async (file: File, kind: "qr" | "voucher" | "image") => {
-    const path = `${order.id}/${Date.now()}-${file.name}`;
+    const path = `chats/${order.id}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("chat-uploads").upload(path, file);
     if (error) return toast.error(error.message);
     const { data: pub } = supabase.storage.from("chat-uploads").getPublicUrl(path);
@@ -177,7 +179,13 @@ function OrderPage() {
       message_text: `➡️ Estado: ${next === "entregado" ? "Entregado" : "En Cocina"}`,
       kind: "system",
     });
-    if (next === "entregado") toast.success("¡Entregado! Puntos y métricas actualizados.");
+    if (next === "entregado") {
+      toast.success("¡Entregado! Puntos y métricas actualizados.");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        navigate({ to: "/dashboard" });
+      }, 4000);
+    }
   };
 
   const cancel = async () => {
@@ -320,6 +328,119 @@ function OrderPage() {
           <Button size="icon" onClick={sendText}><Send className="h-4 w-4" /></Button>
         </div>
       </div>
+      {showSuccessModal && (
+        <>
+          <Confetti />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="mx-4 max-w-md w-full rounded-3xl border border-border bg-card p-8 text-center shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-success/10 text-success">
+                <CheckCircle2 className="h-12 w-12 animate-bounce" />
+              </div>
+              <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
+                ¡Felicidades!
+              </h2>
+              <p className="mt-2 text-lg font-medium text-muted-foreground">
+                Haz vendido una receta saludable 🎉🥗
+              </p>
+              <p className="mt-4 text-xs text-muted-foreground animate-pulse">
+                Redireccionando al dashboard en breve...
+              </p>
+              <Button
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="mt-6 w-full rounded-full bg-primary py-6 text-base font-semibold"
+              >
+                Ir al Dashboard ahora
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
+  );
+}
+
+function Confetti() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (canvas) {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+    };
+    window.addEventListener("resize", handleResize);
+
+    const colors = ["#FFC107", "#FF5722", "#E91E63", "#9C27B0", "#3F51B5", "#00BCD4", "#4CAF50", "#8BC34A"];
+    const pieces: Array<{
+      x: number;
+      y: number;
+      size: number;
+      color: string;
+      speedX: number;
+      speedY: number;
+      rotation: number;
+      rotationSpeed: number;
+    }> = [];
+
+    for (let i = 0; i < 150; i++) {
+      pieces.push({
+        x: Math.random() * width,
+        y: Math.random() * height - height,
+        size: Math.random() * 8 + 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedX: Math.random() * 4 - 2,
+        speedY: Math.random() * 4 + 4,
+        rotation: Math.random() * 360,
+        rotationSpeed: Math.random() * 4 - 2,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      let active = false;
+
+      pieces.forEach((p) => {
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.rotation += p.rotationSpeed;
+
+        if (p.y < height) active = true;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      });
+
+      if (active) {
+        animationFrameId = requestAnimationFrame(draw);
+      }
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none fixed inset-0 z-[100] h-full w-full"
+    />
   );
 }
