@@ -12,24 +12,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminPage() {
-  const { view } = useDemoStore();
-  const [leads, setLeads] = useState<any[]>([]);
-
-  const fetchLeads = async () => {
-    const { data } = await supabase
-      .from("nutritionist_leads")
-      .select("*")
-      .eq("status", "pendiente_revision")
-      .order("created_at", { ascending: false });
-    setLeads(data ?? []);
-  };
-
-  useEffect(() => {
-    if (view === "admin") {
-      fetchLeads();
-    }
-  }, [view]);
-
+  const { profile } = useAuth();
+  const view = profile?.role;
   if (view !== "admin") return <Navigate to="/home" />;
 
   const activateLead = async (lead: any) => {

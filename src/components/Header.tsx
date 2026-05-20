@@ -1,16 +1,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { useDemoStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { LogOut, Sparkles } from "lucide-react";
 
 export function Header() {
   const { profile, session, signOut } = useAuth();
-  const { view, setView } = useDemoStore();
   const navigate = useNavigate();
 
-  const effectiveRole =
-    view === "cliente" ? "usuario" : view === "restaurante" ? "restaurante" : view === "admin" ? "admin" : profile?.role;
+  const effectiveRole = profile?.role ?? "usuario";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -45,70 +42,27 @@ export function Header() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          {session && (
-            <div className="hidden items-center rounded-full border border-border bg-card p-1 text-xs font-medium sm:flex">
-              <button
-                onClick={() => {
-                  setView("cliente");
-                  navigate({ to: "/home" });
-                }}
-                className={`rounded-full px-3 py-1 transition ${
-                  effectiveRole === "usuario"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Cliente
-              </button>
-              <button
-                onClick={() => {
-                  setView("restaurante");
-                  navigate({ to: "/home" });
-                }}
-                className={`rounded-full px-3 py-1 transition ${
-                  effectiveRole === "restaurante"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Restaurante
-              </button>
-              <button
-                onClick={() => {
-                  setView("admin");
-                  navigate({ to: "/admin" });
-                }}
-                className={`rounded-full px-3 py-1 transition ${
-                  effectiveRole === "admin"
-                    ? "bg-destructive text-destructive-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Admin
-              </button>
-            </div>
-          )}
+        {profile?.tier === "premium" && (
+          <span className="hidden items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-success md:inline-flex">
+            <Sparkles className="h-3 w-3" /> Premium
+          </span>
+        )}
 
-          {profile?.tier === "premium" && (
-            <span className="hidden items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-success md:inline-flex">
-              <Sparkles className="h-3 w-3" /> Premium
-            </span>
-          )}
-
-          {session ? (
-            <Button variant="ghost" size="icon" onClick={() => signOut()} aria-label="Salir">
-              <LogOut className="h-4 w-4" />
+        {session ? (
+          <Button variant="ghost" size="icon" onClick={() => signOut()} aria-label="Salir">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        ) : (
+          <>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/login">Entrar</Link>
             </Button>
-          ) : (
-            <>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/login">Entrar</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/signup">Registrarme</Link>
-              </Button>
-            </>
-          )}
+            <Button asChild size="sm">
+              <Link to="/signup">Registrarme</Link>
+            </Button>
+          </>
+        )}
+
         </div>
       </div>
     </header>
