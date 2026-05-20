@@ -9,7 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DIET_OPTIONS, RESTRICTION_OPTIONS, GOAL_OPTIONS, TAG_LABELS } from "@/lib/constants";
 import { toast } from "sonner";
-import { Trash2, Plus, UploadCloud } from "lucide-react";
+import { Trash2, Plus, UploadCloud, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/dishes")({
   component: DishesPage,
@@ -30,6 +37,16 @@ function DishesPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Edit states
+  const [editingDish, setEditingDish] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [uploadingEditImage, setUploadingEditImage] = useState(false);
+  const editFileRef = useRef<HTMLInputElement>(null);
 
   const effective = view === "cliente" ? "usuario" : view === "restaurante" ? "restaurante" : profile?.role;
 
@@ -88,6 +105,57 @@ function DishesPage() {
 
   const remove = async (id: string) => {
     await supabase.from("restaurant_dishes").delete().eq("id", id);
+    reload();
+  };
+
+  const openEdit = (d: any) => {
+    setEditingDish(d);
+    setEditName(d.dish_name);
+    setEditPrice(String(d.base_price));
+    setEditDesc(d.description || "");
+    setEditTags(d.health_tags || []);
+    setEditImageUrl(d.image_url || null);
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    setUploadingEditImage(true);
+    const path = `dishes/${profile.id}-${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage.from("chat-uploads").upload(path, file);
+    
+    if (uploadError) {
+      toast.error(uploadError.message);
+      setUploadingEditImage(false);
+      return;
+    }
+
+    const { data: pub } = supabase.storage.from("chat-uploads").getPublicUrl(path);
+    setEditImageUrl(pub.publicUrl);
+    setUploadingEditImage(false);
+    toast.success("Imagen del plato subida");
+  };
+
+  const saveEdit = async () => {
+    if (!editingDish) return;
+    if (!editName || !editPrice) return toast.error("Faltan nombre y precio");
+    
+    const { error } = await supabase
+      .from("restaurant_dishes")
+      .update({
+        dish_name: editName,
+        base_price: Number(editPrice),
+        description: editDesc,
+        health_tags: editTags,
+        image_url: editImageUrl,
+      })
+      .eq("id", editingDish.id);
+      
+    if (error) return toast.error(error.message);
+    
+    toast.success("Plato actualizado");
+    setEditingDish(null);
     reload();
   };
 
@@ -166,8 +234,76 @@ function DishesPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="font-display text-lg font-semibold">S/ {Number(d.base_price).toFixed(2)}</div>
+              <Dialog open={editingDish?.id === d.id} onOpenChange={(open) => { if (!open) setEditingDish(null); }}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="ghost" onClick={() => openEdit(d)}>
+                    <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg rounded-3xl p-6">
+                  <DialogHeader>
+                    <DialogTitle className="font-display text-xl font-bold">Editar receta / insumos</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label>Nombre del plato</Label>
+                        <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Precio base (S/)</Label>
+                        <Input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5 md:col-span-2">
+                        <Label>Descripción / insumos</Label>
+                        <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={4} />
+                      </div>
+                      
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Foto del Plato (Opcional)</Label>
+                        <div className="flex items-center gap-4">
+                          {editImageUrl ? (
+                            <div className="relative h-16 w-16 shrink-0 rounded-2xl border bg-muted overflow-hidden">
+                              <img src={editImageUrl} alt="Plato" className="h-full w-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-dashed border-muted-foreground/30 bg-muted">
+                              <UploadCloud className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <input type="file" accept="image/*" className="hidden" ref={editFileRef} onChange={handleEditImageUpload} />
+                            <Button type="button" variant="outline" size="sm" onClick={() => editFileRef.current?.click()} disabled={uploadingEditImage}>
+                              {uploadingEditImage ? "Subiendo..." : editImageUrl ? "Cambiar imagen" : "Subir Foto"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Etiquetas de salud</Label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {ALL_TAGS.map((t) => {
+                          const on = editTags.includes(t.id);
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => setEditTags(on ? editTags.filter((x) => x !== t.id) : [...editTags, t.id])}
+                              className={`rounded-full border px-3 py-1 text-xs font-medium ${on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                            >
+                              {t.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <Button onClick={saveEdit} className="w-full rounded-full mt-2">Guardar cambios</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Button size="icon" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </div>
           </div>

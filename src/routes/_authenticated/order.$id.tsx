@@ -55,12 +55,23 @@ function OrderPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadKind, setUploadKind] = useState<"qr" | "voucher" | "image">("image");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
   const listEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
       const { data: o } = await supabase.from("orders_chat_hub").select("*").eq("id", id).maybeSingle();
       setOrder(o as Order);
+      if (o) {
+        const { data: meta } = await supabase
+          .from("restaurants_metadata")
+          .select("qr_url")
+          .eq("id", o.restaurant_id)
+          .maybeSingle();
+        if (meta?.qr_url) {
+          setQrUrl(meta.qr_url);
+        }
+      }
       const { data: m } = await supabase
         .from("chat_messages")
         .select("*")
@@ -265,12 +276,24 @@ function OrderPage() {
 
       {/* Client actions */}
       {isClient && order.status === "pendiente_pago" && (
-        <div className="mt-4 rounded-3xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold">Adjunta tu comprobante</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Escanea el QR del restaurante y deposita. Luego sube la captura.</p>
-          <Button className="mt-3 rounded-full" onClick={() => { setUploadKind("voucher"); fileRef.current?.click(); }}>
-            <Receipt className="mr-1.5 h-4 w-4" /> Subir voucher
-          </Button>
+        <div className="mt-4 rounded-3xl border border-border bg-card p-5 space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Adjunta tu comprobante</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Escanea el QR del restaurante y deposita. Luego sube la captura del váucher.</p>
+          </div>
+          {qrUrl && (
+            <div className="flex flex-col items-center justify-center p-3 border border-dashed border-border rounded-2xl bg-muted/20 max-w-xs mx-auto">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Código QR de Pago</span>
+              <div className="w-48 h-48 overflow-hidden rounded-xl border bg-white flex items-center justify-center p-2 shadow-inner">
+                <img src={qrUrl} alt="QR del Restaurante" className="h-full w-full object-contain" />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-center">
+            <Button className="rounded-full w-full max-w-xs" onClick={() => { setUploadKind("voucher"); fileRef.current?.click(); }}>
+              <Receipt className="mr-1.5 h-4 w-4" /> Subir voucher
+            </Button>
+          </div>
         </div>
       )}
 
