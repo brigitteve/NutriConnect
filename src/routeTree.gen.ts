@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as B2bNutritionistsRouteImport } from './routes/b2b-nutritionists'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNutritionistsRouteImport } from './routes/_authenticated/nutritionists'
@@ -49,6 +50,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   id: '/orders',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/nutritionists': typeof AuthenticatedNutritionistsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/order/$id': typeof AuthenticatedOrderIdRoute
   '/restaurant/$id': typeof AuthenticatedRestaurantIdRoute
 }
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/nutritionists': typeof AuthenticatedNutritionistsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/order/$id': typeof AuthenticatedOrderIdRoute
   '/restaurant/$id': typeof AuthenticatedRestaurantIdRoute
 }
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/nutritionists': typeof AuthenticatedNutritionistsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/order/$id': typeof AuthenticatedOrderIdRoute
   '/_authenticated/restaurant/$id': typeof AuthenticatedRestaurantIdRoute
 }
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/nutritionists'
     | '/onboarding'
     | '/orders'
+    | '/profile'
     | '/order/$id'
     | '/restaurant/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/nutritionists'
     | '/onboarding'
     | '/orders'
+    | '/profile'
     | '/order/$id'
     | '/restaurant/$id'
   id:
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nutritionists'
     | '/_authenticated/onboarding'
     | '/_authenticated/orders'
+    | '/_authenticated/profile'
     | '/_authenticated/order/$id'
     | '/_authenticated/restaurant/$id'
   fileRoutesById: FileRoutesById
@@ -260,6 +272,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/orders': {
       id: '/_authenticated/orders'
@@ -351,6 +370,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedNutritionistsRoute: typeof AuthenticatedNutritionistsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedOrderIdRoute: typeof AuthenticatedOrderIdRoute
   AuthenticatedRestaurantIdRoute: typeof AuthenticatedRestaurantIdRoute
 }
@@ -365,6 +385,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedNutritionistsRoute: AuthenticatedNutritionistsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedOrderIdRoute: AuthenticatedOrderIdRoute,
   AuthenticatedRestaurantIdRoute: AuthenticatedRestaurantIdRoute,
 }

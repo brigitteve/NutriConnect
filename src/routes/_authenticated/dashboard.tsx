@@ -63,7 +63,13 @@ function DashboardPage() {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  if (effective === "usuario") return <Navigate to="/discover" />;
+  if (!profile) {
+  return <Navigate to="/login" />;
+}
+if (loading) {
+  return <div className="p-10 text-center text-sm text-muted-foreground">Cargando…</div>;
+}
+if (effective === "usuario") return <Navigate to="/discover" />;
   if (!meta) return <div className="p-10 text-center text-sm text-muted-foreground">Cargando…</div>;
 
   return (
