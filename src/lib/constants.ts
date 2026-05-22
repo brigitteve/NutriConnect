@@ -9,6 +9,7 @@ export const RESTRICTION_OPTIONS = [
   { id: "sin_lacteos", label: "Sin Lácteos" },
   { id: "sin_azucar", label: "Sin Azúcar" },
   { id: "bajo_sodio", label: "Bajo en Sodio" },
+  { id: "facil_masticar", label: "Fácil de Masticar" },
 ] as const;
 
 export const GOAL_OPTIONS = [
@@ -24,19 +25,27 @@ export const TAG_LABELS: Record<string, string> = {
   sin_lacteos: "Sin Lácteos",
   sin_azucar: "Sin Azúcar",
   bajo_sodio: "Bajo en Sodio",
+  facil_masticar: "Fácil de Masticar",
   quema_grasa: "Quema de Grasa",
   hipertrofia: "Hipertrofia",
 };
 
 export const ORDER_STAGES = [
-  { id: "pendiente_pago", label: "Pendiente de Pago" },
-  { id: "en_cocina", label: "En Cocina / Preparando" },
+  { id: "pago_confirmado", label: "Pago Confirmado" },
+  { id: "esperando_validacion", label: "Validación de Capricho" },
+  { id: "en_preparacion", label: "Inicia Preparación" },
+  { id: "preparando", label: "Preparando" },
+  { id: "listo_para_enviar", label: "Listo" },
   { id: "entregado", label: "Entregado" },
 ] as const;
 
 export type OrderStatus =
   | "chat_activo"
   | "pendiente_pago"
-  | "en_cocina"
+  | "pago_confirmado"
+  | "esperando_validacion"
+  | "en_preparacion"
+  | "preparando"
+  | "listo_para_enviar"
   | "entregado"
   | "cancelado";

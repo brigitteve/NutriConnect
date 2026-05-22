@@ -177,6 +177,17 @@ export type Database = {
           safety_meals_ordered: number
           tier: Database["public"]["Enums"]["user_tier"]
           updated_at: string
+          height: number | null
+          weight: number | null
+          imc: number | null
+          allergies: string[]
+          intolerances: string[]
+          chronic_diseases: string[]
+          special_needs: string[]
+          allergies_custom: string | null
+          intolerances_custom: string | null
+          chronic_diseases_custom: string | null
+          special_needs_custom: string | null
         }
         Insert: {
           badges?: string[]
@@ -192,6 +203,17 @@ export type Database = {
           safety_meals_ordered?: number
           tier?: Database["public"]["Enums"]["user_tier"]
           updated_at?: string
+          height?: number | null
+          weight?: number | null
+          imc?: number | null
+          allergies?: string[]
+          intolerances?: string[]
+          chronic_diseases?: string[]
+          special_needs?: string[]
+          allergies_custom?: string | null
+          intolerances_custom?: string | null
+          chronic_diseases_custom?: string | null
+          special_needs_custom?: string | null
         }
         Update: {
           badges?: string[]
@@ -207,6 +229,17 @@ export type Database = {
           safety_meals_ordered?: number
           tier?: Database["public"]["Enums"]["user_tier"]
           updated_at?: string
+          height?: number | null
+          weight?: number | null
+          imc?: number | null
+          allergies?: string[]
+          intolerances?: string[]
+          chronic_diseases?: string[]
+          special_needs?: string[]
+          allergies_custom?: string | null
+          intolerances_custom?: string | null
+          chronic_diseases_custom?: string | null
+          special_needs_custom?: string | null
         }
         Relationships: []
       }

@@ -14,6 +14,17 @@ export interface Profile {
   safety_meals_ordered: number;
   points: number;
   badges: string[];
+  height: number | null;
+  weight: number | null;
+  imc: number | null;
+  allergies: string[];
+  intolerances: string[];
+  chronic_diseases: string[];
+  special_needs: string[];
+  allergies_custom: string | null;
+  intolerances_custom: string | null;
+  chronic_diseases_custom: string | null;
+  special_needs_custom: string | null;
 }
 
 interface AuthCtx {

@@ -23,7 +23,8 @@ function DiscoverPage() {
     if (!profile) return;
     const load = async () => {
       setLoading(true);
-      const required = [...profile.medical_restrictions, ...profile.diets];
+      const required = [...(profile.medical_restrictions ?? []), ...(profile.diets ?? [])];
+      
       const { data: dishes } = await supabase
         .from("restaurant_dishes")
         .select("*");
@@ -33,10 +34,50 @@ function DiscoverPage() {
 
       const metaById = new Map((restMeta ?? []).map((r) => [r.id, r]));
       const grouped = new Map<string, RestaurantCardData["matchingDishes"]>();
+      
       for (const d of dishes ?? []) {
+        // 1. Check medical restrictions & diets (must match all required)
         const tags: string[] = d.health_tags ?? [];
         const matches = required.every((r) => tags.includes(r));
         if (!matches) continue;
+
+        // 2. Check allergen exclusions (must NOT contain allergens)
+        const name = (d.dish_name || "").toLowerCase();
+        const desc = (d.description || "").toLowerCase();
+        let containsAllergen = false;
+
+        // Seafood allergy check
+        if (profile.allergies?.includes("mariscos") || profile.medical_restrictions?.includes("mariscos")) {
+          const keywords = ["marisco", "pescado", "camarón", "langostino", "cangrejo", "choros", "conchas", "pulpo", "mar", "marina", "cebiche", "ceviche", "salmón", "atún", "trucha"];
+          if (keywords.some(k => name.includes(k) || desc.includes(k))) containsAllergen = true;
+        }
+
+        // Peanut allergy check
+        if (profile.allergies?.includes("mani") || profile.medical_restrictions?.includes("mani")) {
+          const keywords = ["maní", "mani", "nuez", "nueces", "almendra", "pecana", "pistacho", "fruto seco", "avellana"];
+          if (keywords.some(k => name.includes(k) || desc.includes(k))) containsAllergen = true;
+        }
+
+        // Egg allergy check
+        if (profile.allergies?.includes("huevo") || profile.medical_restrictions?.includes("huevo")) {
+          const keywords = ["huevo", "mayonesa", "merengue", "tortilla"];
+          if (keywords.some(k => name.includes(k) || desc.includes(k))) containsAllergen = true;
+        }
+
+        // Soy allergy check
+        if (profile.allergies?.includes("soya") || profile.medical_restrictions?.includes("soya")) {
+          const keywords = ["soya", "sillao", "tofu", "soja"];
+          if (keywords.some(k => name.includes(k) || desc.includes(k))) containsAllergen = true;
+        }
+
+        // Custom allergy text input matching
+        if (profile.allergies_custom) {
+          const customList = profile.allergies_custom.toLowerCase().split(/[\s,.]+/).filter(w => w.length > 2);
+          if (customList.some(k => name.includes(k) || desc.includes(k))) containsAllergen = true;
+        }
+
+        if (containsAllergen) continue;
+
         if (!metaById.has(d.restaurant_id)) continue;
         const arr = grouped.get(d.restaurant_id) ?? [];
         arr.push(d as RestaurantCardData["matchingDishes"][number]);

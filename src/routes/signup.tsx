@@ -18,22 +18,79 @@ function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Dynamic IMC Calculation
+  const h = parseFloat(height);
+  const w = parseFloat(weight);
+  const imc = h > 0 && w > 0 ? w / (h * h) : null;
+
+  const getImcInfo = (val: number) => {
+    if (val < 18.5) return { label: "Bajo Peso", color: "bg-amber-100 text-amber-800 border-amber-200" };
+    if (val < 25) return { label: "Peso Saludable", color: "bg-success/15 text-success border-success/30" };
+    if (val < 30) return { label: "Sobrepeso", color: "bg-orange-100 text-orange-800 border-orange-200" };
+    return { label: "Obesidad", color: "bg-destructive/15 text-destructive border-destructive/30" };
+  };
+
+  const imcInfo = imc ? getImcInfo(imc) : null;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!role) return toast.error("Elige primero cómo quieres registrarte.");
+    
+    let heightVal = role === "usuario" ? parseFloat(height) : null;
+    let weightVal = role === "usuario" ? parseFloat(weight) : null;
+    let imcVal = imc ? parseFloat(imc.toFixed(2)) : null;
+
+    if (role === "usuario") {
+      if (!heightVal || heightVal <= 0 || heightVal > 3) {
+        return toast.error("Por favor, ingresa una talla válida en metros (ej. 1.70)");
+      }
+      if (!weightVal || weightVal <= 0 || weightVal > 400) {
+        return toast.error("Por favor, ingresa un peso válido en kg (ej. 70)");
+      }
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/home`,
-        data: { role, full_name: fullName },
+        data: { 
+          role, 
+          full_name: fullName,
+          height: heightVal,
+          weight: weightVal,
+          imc: imcVal,
+        },
       },
     });
+
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+
+    // Direct fallback insert/update to profiles to guarantee schema compliance
+    if (signUpData?.user && role === "usuario") {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          height: heightVal,
+          weight: weightVal,
+          imc: imcVal,
+        })
+        .eq("id", signUpData.user.id);
+      
+      if (profileError) {
+        console.warn("Direct profiles update warning:", profileError.message);
+      }
+    }
+
     setLoading(false);
-    if (error) return toast.error(error.message);
     toast.success("Cuenta creada. ¡Bienvenido a NutriConnect!");
     navigate({ to: "/home" });
   };
@@ -75,6 +132,57 @@ function SignupPage() {
           <Label htmlFor="password">Contraseña</Label>
           <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
+
+        {role === "usuario" && (
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
+            <h3 className="font-display text-sm font-semibold text-primary">📏 Medidas Corporales</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="height">Talla (metros)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  step="0.01"
+                  min="0.5"
+                  max="2.5"
+                  placeholder="Ej: 1.70"
+                  required
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="weight">Peso (kg)</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.1"
+                  min="10"
+                  max="300"
+                  placeholder="Ej: 72.5"
+                  required
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {imc !== null && (
+              <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/30">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Tu IMC Calculado</div>
+                  <div className="font-display text-2xl font-bold text-foreground mt-0.5">{imc.toFixed(2)}</div>
+                </div>
+                {imcInfo && (
+                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${imcInfo.color}`}>
+                    {imcInfo.label}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <Button type="submit" className="w-full" disabled={loading || !role}>
           {loading ? "Creando cuenta…" : "Registrarme"}
         </Button>

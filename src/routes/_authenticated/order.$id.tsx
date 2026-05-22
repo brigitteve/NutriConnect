@@ -39,8 +39,12 @@ interface Message {
 
 const NEXT_STAGE: Record<OrderStatus, OrderStatus | null> = {
   chat_activo: "pendiente_pago",
-  pendiente_pago: "en_cocina",
-  en_cocina: "entregado",
+  pendiente_pago: "pago_confirmado",
+  pago_confirmado: "esperando_validacion",
+  esperando_validacion: "en_preparacion",
+  en_preparacion: "preparando",
+  preparando: "listo_para_enviar",
+  listo_para_enviar: "entregado",
   entregado: null,
   cancelado: null,
 };
@@ -168,29 +172,55 @@ function OrderPage() {
   };
 
   const acceptPayment = async () => {
-    await supabase
+    // Confirm payment (sets to pago_confirmado) which immediately auto-advances to esperando_validacion
+    const { error } = await supabase
       .from("orders_chat_hub")
-      .update({ status: "en_cocina" })
+      .update({ status: "esperando_validacion" })
       .eq("id", order.id);
+    if (error) return toast.error(error.message);
+
     await supabase.from("chat_messages").insert({
       order_id: order.id,
       sender_id: profile.id,
-      message_text: "✅ Pago confirmado. El plato está en preparación.",
+      message_text: "💵 Pago verificado y confirmado con éxito (Pago Confirmado).",
       kind: "system",
     });
-    toast.success("Pago confirmado. Pipeline activado.");
+
+    await supabase.from("chat_messages").insert({
+      order_id: order.id,
+      sender_id: profile.id,
+      message_text: order.is_premium_custom
+        ? "📋 Esperando validación del comensal para confirmar su capricho..."
+        : "📋 Esperando validación del comensal para aceptar la receta predefinida...",
+      kind: "system",
+    });
+
+    toast.success("Pago confirmado. Esperando validación del comensal.");
   };
 
   const advance = async () => {
     const next = NEXT_STAGE[order.status];
     if (!next) return;
     await supabase.from("orders_chat_hub").update({ status: next }).eq("id", order.id);
+    
+    let msg = "";
+    if (next === "preparando") {
+      msg = "🍳 Plato preparándose en la cocina. El chef está cuidando cada detalle saludable.";
+    } else if (next === "listo_para_enviar") {
+      msg = "📦 ¡El plato está listo para enviar!";
+    } else if (next === "entregado") {
+      msg = "🎉 ¡Pedido entregado exitosamente al comensal!";
+    } else {
+      msg = `➡️ Estado: ${next}`;
+    }
+
     await supabase.from("chat_messages").insert({
       order_id: order.id,
       sender_id: profile.id,
-      message_text: `➡️ Estado: ${next === "entregado" ? "Entregado" : "En Cocina"}`,
+      message_text: msg,
       kind: "system",
     });
+
     if (next === "entregado") {
       toast.success("¡Entregado! Puntos y métricas actualizados.");
       setShowSuccessModal(true);
@@ -255,21 +285,97 @@ function OrderPage() {
                   value={priceInput}
                   onChange={(e) => setPriceInput(e.target.value)}
                 />
-                <Button onClick={setPrice} className="rounded-full">Enviar Cotización</Button>
+                <Button onClick={setPrice} className="rounded-full font-semibold">Enviar Cotización</Button>
               </div>
             )}
             {order.status === "pendiente_pago" && (
-              <Button onClick={acceptPayment} className="rounded-full bg-success text-success-foreground hover:bg-success/90">
-                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Confirmar Pago e Iniciar Cocina
+              <Button onClick={acceptPayment} className="rounded-full bg-success text-success-foreground hover:bg-success/90 font-semibold text-xs">
+                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Confirmar Pago
               </Button>
             )}
-            {order.status === "en_cocina" && (
-              <Button onClick={advance} variant="outline" className="rounded-full border-success text-success hover:bg-success/10">
-                📦 Despachar Pedido
+            {order.status === "esperando_validacion" && (
+              <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5 bg-muted p-3 rounded-2xl w-full">
+                ⏳ Esperando que el comensal apruebe y valide la receta para iniciar preparación.
+              </span>
+            )}
+            {order.status === "en_preparacion" && (
+              <Button
+                onClick={async () => {
+                  const { error } = await supabase
+                    .from("orders_chat_hub")
+                    .update({ status: "preparando" })
+                    .eq("id", order.id);
+
+                  if (error) return toast.error(error.message);
+
+                  await supabase.from("chat_messages").insert({
+                    order_id: order.id,
+                    sender_id: profile.id,
+                    message_text: "🍳 Inicia preparación en la cocina. El chef está preparando los ingredientes saludables.",
+                    kind: "system",
+                  });
+
+                  toast.success("¡Pedido en preparación!");
+                }}
+                className="rounded-full bg-primary text-primary-foreground hover:opacity-90 font-semibold"
+              >
+                🍳 Iniciar Preparación
+              </Button>
+            )}
+            {order.status === "preparando" && (
+              <Button
+                onClick={async () => {
+                  const { error } = await supabase
+                    .from("orders_chat_hub")
+                    .update({ status: "listo_para_enviar" })
+                    .eq("id", order.id);
+
+                  if (error) return toast.error(error.message);
+
+                  await supabase.from("chat_messages").insert({
+                    order_id: order.id,
+                    sender_id: profile.id,
+                    message_text: "📦 ¡El plato está listo! Esperando despacho.",
+                    kind: "system",
+                  });
+
+                  toast.success("¡Plato marcado como listo!");
+                }}
+                className="rounded-full bg-success text-success-foreground hover:bg-success/90 font-semibold"
+              >
+                📦 Marcar como Listo
+              </Button>
+            )}
+            {order.status === "listo_para_enviar" && (
+              <Button
+                onClick={async () => {
+                  const { error } = await supabase
+                    .from("orders_chat_hub")
+                    .update({ status: "entregado" })
+                    .eq("id", order.id);
+
+                  if (error) return toast.error(error.message);
+
+                  await supabase.from("chat_messages").insert({
+                    order_id: order.id,
+                    sender_id: profile.id,
+                    message_text: "🎉 ¡Pedido entregado exitosamente al comensal!",
+                    kind: "system",
+                  });
+
+                  toast.success("¡Entregado! Puntos y métricas actualizados.");
+                  setShowSuccessModal(true);
+                  setTimeout(() => {
+                    navigate({ to: "/dashboard" });
+                  }, 4000);
+                }}
+                className="rounded-full bg-success text-success-foreground hover:bg-success/90 font-semibold"
+              >
+                🛵 Entregar Pedido
               </Button>
             )}
             {order.status !== "entregado" && order.status !== "cancelado" && (
-              <Button variant="ghost" className="rounded-full text-destructive" onClick={cancel}>Cancelar</Button>
+              <Button variant="ghost" className="rounded-full text-destructive text-xs" onClick={cancel}>Anular Pedido</Button>
             )}
           </div>
         </div>
@@ -303,6 +409,82 @@ function OrderPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {isClient && order.status === "esperando_validacion" && (
+        <div className="mt-4 rounded-3xl border-2 border-primary bg-card p-6 shadow-lg space-y-4 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-3 text-primary shrink-0">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-bold text-foreground">
+                {order.is_premium_custom ? "¡Valida tu Capricho!" : "Valida tu Receta"}
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Revisa los detalles antes de que el restaurante comience a cocinar.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-muted/50 p-4 border border-border text-xs">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Detalles a validar:</h4>
+            {order.is_premium_custom ? (
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  ✨ Pedido Premium Personalizado
+                </div>
+                {order.customized_recipe?.portions && (
+                  <div className="text-sm text-foreground">
+                    <strong>Porciones:</strong> {order.customized_recipe.portions}
+                  </div>
+                )}
+                {order.customized_recipe?.specs && (
+                  <div className="text-xs text-foreground bg-card p-3 rounded-xl border border-border/80 break-words font-medium">
+                    <strong>Tu "Capricho" saludable:</strong> "{order.customized_recipe.specs}"
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  🥗 Receta Predefinida (Freemium)
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Receta estándar de <strong>{order.dish_name}</strong> adaptada automáticamente con un pago simbólico de S/ 20.00.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Button
+            onClick={async () => {
+              const { error } = await supabase
+                .from("orders_chat_hub")
+                .update({ status: "en_preparacion" })
+                .eq("id", order.id);
+
+              if (error) return toast.error(error.message);
+
+              const msgText = order.is_premium_custom
+                ? "✅ Comensal confirmó su capricho saludable cumplido. ¡Iniciando preparación!"
+                : "✅ Comensal aceptó la receta predefinida. ¡Iniciando preparación!";
+
+              await supabase.from("chat_messages").insert({
+                order_id: order.id,
+                sender_id: profile.id,
+                message_text: msgText,
+                kind: "system",
+              });
+
+              toast.success("¡Receta validada con éxito! El restaurante ya puede empezar a cocinar.");
+            }}
+            className="w-full rounded-full py-6 font-semibold text-sm bg-success text-success-foreground hover:bg-success/90 shadow-md flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {order.is_premium_custom ? "Confirmar capricho cumplido" : "Aceptar receta predefinida"}
+          </Button>
         </div>
       )}
 

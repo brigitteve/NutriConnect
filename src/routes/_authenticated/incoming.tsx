@@ -116,13 +116,13 @@ function IncomingPage() {
     toast.success("Cotización enviada");
   };
 
-  const handleAcceptPayment = async (orderId: string) => {
+  const handleAcceptPayment = async (orderId: string, orderIsPremium: boolean) => {
     setRemovingOrderIds((prev) => [...prev, orderId]);
 
     setTimeout(async () => {
       const { error } = await supabase
         .from("orders_chat_hub")
-        .update({ status: "en_cocina" })
+        .update({ status: "esperando_validacion" })
         .eq("id", orderId);
 
       if (error) {
@@ -133,12 +133,57 @@ function IncomingPage() {
       await supabase.from("chat_messages").insert({
         order_id: orderId,
         sender_id: profile!.id,
-        message_text: "✅ Pago confirmado. El plato está en preparación.",
+        message_text: "💵 Pago verificado y confirmado con éxito (Pago Confirmado).",
         kind: "system",
       });
 
-      toast.success("Pago confirmado. ¡A cocinar!");
+      await supabase.from("chat_messages").insert({
+        order_id: orderId,
+        sender_id: profile!.id,
+        message_text: orderIsPremium
+          ? "📋 Esperando validación del comensal para confirmar su capricho..."
+          : "📋 Esperando validación del comensal para aceptar la receta predefinida...",
+        kind: "system",
+      });
+
+      toast.success("Pago confirmado. Esperando validación.");
     }, 300);
+  };
+
+  const handleStartPreparation = async (orderId: string) => {
+    const { error } = await supabase
+      .from("orders_chat_hub")
+      .update({ status: "preparando" })
+      .eq("id", orderId);
+
+    if (error) return toast.error(error.message);
+
+    await supabase.from("chat_messages").insert({
+      order_id: orderId,
+      sender_id: profile!.id,
+      message_text: "🍳 Inicia preparación en la cocina. El chef está preparando los ingredientes saludables.",
+      kind: "system",
+    });
+
+    toast.success("¡Pedido en preparación!");
+  };
+
+  const handleMarkAsReady = async (orderId: string) => {
+    const { error } = await supabase
+      .from("orders_chat_hub")
+      .update({ status: "listo_para_enviar" })
+      .eq("id", orderId);
+
+    if (error) return toast.error(error.message);
+
+    await supabase.from("chat_messages").insert({
+      order_id: orderId,
+      sender_id: profile!.id,
+      message_text: "📦 ¡El plato está listo! Esperando despacho.",
+      kind: "system",
+    });
+
+    toast.success("¡Plato marcado como listo!");
   };
 
   const handleCancel = async (orderId: string) => {
@@ -183,7 +228,7 @@ function IncomingPage() {
       await supabase.from("chat_messages").insert({
         order_id: orderId,
         sender_id: profile!.id,
-        message_text: `➡️ Estado: Entregado`,
+        message_text: `🎉 ¡Pedido entregado exitosamente al comensal!`,
         kind: "system",
       });
 
@@ -194,21 +239,21 @@ function IncomingPage() {
   };
 
   const countNuevos = orders.filter(
-    (o) => (o.status === "chat_activo" || o.status === "pendiente_pago") && o.status !== "cancelado"
+    (o) => (o.status === "chat_activo" || o.status === "pendiente_pago" || o.status === "pago_confirmado" || o.status === "esperando_validacion") && o.status !== "cancelado"
   ).length;
 
   const countCocina = orders.filter(
-    (o) => o.status === "en_cocina" && o.status !== "cancelado"
+    (o) => (o.status === "en_preparacion" || o.status === "preparando" || o.status === "listo_para_enviar") && o.status !== "cancelado"
   ).length;
 
   const filteredOrders = orders.filter((o) => {
     if (o.status === "cancelado") return false;
 
     if (activeTab === "nuevos") {
-      return o.status === "chat_activo" || o.status === "pendiente_pago";
+      return o.status === "chat_activo" || o.status === "pendiente_pago" || o.status === "pago_confirmado" || o.status === "esperando_validacion";
     }
     if (activeTab === "cocina") {
-      return o.status === "en_cocina";
+      return o.status === "en_preparacion" || o.status === "preparando" || o.status === "listo_para_enviar";
     }
     if (activeTab === "historial") {
       return o.status === "entregado";
@@ -360,8 +405,8 @@ function IncomingPage() {
                         </a>
                         <Button
                           size="sm"
-                          onClick={() => handleAcceptPayment(o.id)}
-                          className="h-8 rounded-full text-xs bg-success text-success-foreground hover:bg-success/90"
+                          onClick={() => handleAcceptPayment(o.id, !!o.is_premium_custom)}
+                          className="h-8 rounded-full text-xs bg-success text-success-foreground hover:bg-success/90 font-semibold"
                         >
                           Confirmar Pago
                         </Button>
@@ -375,21 +420,61 @@ function IncomingPage() {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleCancel(o.id)}
-                      className="h-8 rounded-full text-xs text-destructive hover:bg-destructive/10 ml-auto"
+                      className="h-8 rounded-full text-xs text-destructive hover:bg-destructive/10 ml-auto font-medium"
                     >
                       ❌ Anular
                     </Button>
                   </div>
                 )}
 
-                {o.status === "en_cocina" && (
+                {o.status === "esperando_validacion" && (
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
+                      📋 Esperando validación del comensal...
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleCancel(o.id)}
+                      className="h-8 rounded-full text-xs text-destructive hover:bg-destructive/10 ml-auto font-medium"
+                    >
+                      ❌ Anular
+                    </Button>
+                  </div>
+                )}
+
+                {o.status === "en_preparacion" && (
+                  <div className="flex w-full justify-end">
+                    <Button
+                      size="sm"
+                      onClick={() => handleStartPreparation(o.id)}
+                      className="h-8 rounded-full text-xs bg-primary text-primary-foreground hover:opacity-90 font-semibold"
+                    >
+                      Iniciar Cocina 🍳
+                    </Button>
+                  </div>
+                )}
+
+                {o.status === "preparando" && (
+                  <div className="flex w-full justify-end">
+                    <Button
+                      size="sm"
+                      onClick={() => handleMarkAsReady(o.id)}
+                      className="h-8 rounded-full text-xs bg-success text-success-foreground hover:bg-success/90 font-semibold"
+                    >
+                      Marcar como Listo 📦
+                    </Button>
+                  </div>
+                )}
+
+                {o.status === "listo_para_enviar" && (
                   <div className="flex w-full justify-end">
                     <Button
                       size="sm"
                       onClick={() => handleDispatch(o.id)}
-                      className="h-8 rounded-full text-xs bg-primary text-primary-foreground hover:opacity-90"
+                      className="h-8 rounded-full text-xs bg-success text-success-foreground hover:bg-success/90 font-semibold animate-pulse"
                     >
-                      Despachar 📦
+                      Entregar Pedido 🛵
                     </Button>
                   </div>
                 )}
