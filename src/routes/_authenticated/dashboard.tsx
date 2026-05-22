@@ -1,12 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useDemoStore } from "@/lib/store";
 import { TAG_LABELS } from "@/lib/constants";
 import { Award, Flame, Sparkles, Target, Utensils, QrCode, UploadCloud, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRef } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -15,14 +13,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardPage() {
   const { profile } = useAuth();
-  const { view } = useDemoStore();
   const [meta, setMeta] = useState<any>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [dishCount, setDishCount] = useState(0);
   const [uploadingQR, setUploadingQR] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const effective = view === "cliente" ? "usuario" : view === "restaurante" ? "restaurante" : profile?.role;
+  const effective = profile?.role;
 
   useEffect(() => {
     if (!profile) return;
@@ -63,13 +60,8 @@ function DashboardPage() {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  if (!profile) {
-  return <Navigate to="/login" />;
-}
-if (loading) {
-  return <div className="p-10 text-center text-sm text-muted-foreground">Cargando…</div>;
-}
-if (effective === "usuario") return <Navigate to="/discover" />;
+  if (!profile) return <Navigate to="/login" />;
+  if (effective === "usuario") return <Navigate to="/discover" />;
   if (!meta) return <div className="p-10 text-center text-sm text-muted-foreground">Cargando…</div>;
 
   return (

@@ -49,7 +49,7 @@ function ProfilePage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate({ to: "/settings" })}
+            onClick={() => navigate({ to: "/onboarding" })}
             className="mt-2"
           >
             <ShieldCheck className="mr-1 h-4 w-4" /> Ajustar Preferencias
@@ -145,7 +145,7 @@ function ProfilePage() {
         </TabsContent>
         <TabsContent value="settings">
           <Button asChild>
-            <Link to="/settings">Ir a Configuración</Link>
+            <Link to="/onboarding">Editar mis preferencias de salud</Link>
           </Button>
         </TabsContent>
       </Tabs>
