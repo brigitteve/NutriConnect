@@ -85,22 +85,6 @@ function B2BNutritionistsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground font-display text-lg font-bold">
-              N
-            </div>
-            <span className="font-display text-xl font-semibold tracking-tight">NutriConnect B2B</span>
-          </Link>
-          <div className="ml-auto flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/login">Volver</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-5xl px-4 py-12 md:py-20">
         <div className="grid gap-12 md:grid-cols-2 md:items-start">
           
