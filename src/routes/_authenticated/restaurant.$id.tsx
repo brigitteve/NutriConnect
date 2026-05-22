@@ -91,29 +91,31 @@ function RestaurantPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Hero */}
-      <div
-        className="aspect-[16/6] w-full rounded-3xl bg-muted"
-        style={{ backgroundImage: meta.cover_url ? `url(${meta.cover_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
-      />
-      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-semibold">{meta.name}</h1>
-          {meta.description && <p className="mt-1 text-sm text-muted-foreground">{meta.description}</p>}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {meta.badges.map((b) => (
-              <span key={b} className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">
-                <Award className="h-3 w-3" /> {b}
-              </span>
-            ))}
+
+        {/* Hero */}
+        <div
+          className="aspect-[21/5] w-full rounded-3xl bg-muted"
+          style={{ backgroundImage: meta.cover_url ? `url(${meta.cover_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+        />
+        {/* Title and stats below hero */}
+        <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-semibold">{meta.name}</h1>
+            {meta.description && <p className="mt-1 text-sm text-muted-foreground">{meta.description}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {meta.badges.map((b) => (
+                <span key={b} className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">
+                  <Award className="h-3 w-3" /> {b}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <Stat icon={<Flame className="h-4 w-4 text-primary" />} value={meta.total_orders_completed} label="entregados" />
+            <Stat icon={<Target className="h-4 w-4 text-success" />} value={`${Number(meta.successful_delivery_rate).toFixed(1)}%`} label="efectividad" />
+            <Stat icon={<Sparkles className="h-4 w-4 text-warning" />} value={meta.points} label="puntos" />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <Stat icon={<Flame className="h-4 w-4 text-primary" />} value={meta.total_orders_completed} label="entregados" />
-          <Stat icon={<Target className="h-4 w-4 text-success" />} value={`${Number(meta.successful_delivery_rate).toFixed(1)}%`} label="efectividad" />
-          <Stat icon={<Sparkles className="h-4 w-4 text-warning" />} value={meta.points} label="puntos" />
-        </div>
-      </div>
 
       {/* Counters */}
       {Object.keys(meta.specific_counters ?? {}).length > 0 && (
@@ -216,9 +218,7 @@ function DishRow({
       </div>
 
       <div className="p-5 pt-0 flex flex-wrap gap-2">
-        <Button onClick={onFreemium} className="rounded-full">
-          <ShoppingCart className="mr-1.5 h-4 w-4" /> Realizar pedido
-        </Button>
+        <Button onClick={onFreemium} className="rounded-full">Adaptar a mi perfil</Button>
 
         <Dialog>
           <DialogTrigger asChild>

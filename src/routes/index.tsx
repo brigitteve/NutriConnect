@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import heroBowl from "@/assets/hero-bowl.jpg";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ShieldCheck, ChefHat, Activity } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -14,6 +15,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const { session, profile } = useAuth();
+
+  // Redirect authenticated users to their role-based home
+  if (session && profile) {
+    const target =
+      profile.role === "restaurante"
+        ? "/dashboard"
+        : profile.role === "admin"
+        ? "/admin"
+        : "/discover";
+    return <Navigate to={target} />;
+  }
+
   return (
     <div className="overflow-hidden">
       {/* Hero */}

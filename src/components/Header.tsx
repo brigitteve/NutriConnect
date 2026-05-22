@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { LogOut, Sparkles } from "lucide-react";
@@ -6,26 +6,32 @@ import { LogOut, Sparkles } from "lucide-react";
 export function Header() {
   const { profile, session, signOut } = useAuth();
   const navigate = useNavigate();
-
+  const logoTarget = session ? (profile?.role === "restaurante" ? "/dashboard" : profile?.role === "admin" ? "/admin" : "/discover") : "/";
   const effectiveRole = profile?.role ?? "usuario";
+  const { pathname } = useLocation();
+  const authPages = ["/login", "/signup", "/register"];
+  const isAuthPage = authPages.includes(pathname);
+
+
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={logoTarget} className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground font-display text-lg font-bold">
             N
           </div>
           <span className="font-display text-xl font-semibold tracking-tight">NutriConnect</span>
         </Link>
 
-        {session && (
+        {session && !isAuthPage && (
           <nav className="ml-6 hidden items-center gap-1 md:flex">
             {effectiveRole === "usuario" ? (
               <>
                 <NavLink to="/discover">Descubrir</NavLink>
                 <NavLink to="/orders">Mis Pedidos</NavLink>
                 {profile?.tier === "premium" && <NavLink to="/nutritionists">Nutricionistas</NavLink>}
+                <NavLink to="/profile">Mi Perfil</NavLink>
               </>
             ) : effectiveRole === "restaurante" ? (
               <>

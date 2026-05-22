@@ -63,8 +63,10 @@ function DiscoverPage() {
     load();
   }, [profile]);
 
-  if (!profile) return null;
-  if (!profile.onboarding_complete && profile.role !== "admin") return <Navigate to="/onboarding" />;
+  if (!profile) {
+  return <Navigate to="/login" />;
+}
+if (!profile.onboarding_complete && profile.role !== "admin") return <Navigate to="/onboarding" />;
 
   const togglePremium = async (checked: boolean) => {
     const { error } = await supabase

@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PipelineBar } from "@/components/PipelineBar";
 import { toast } from "sonner";
 import type { OrderStatus } from "@/lib/constants";
 import { TAG_LABELS } from "@/lib/constants";
-import { ImagePlus, Send, CheckCircle2, ArrowRight, QrCode, Receipt } from "lucide-react";
+import { ImagePlus, Send, CheckCircle2, ArrowRight, QrCode } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/order/$id")({
   component: OrderPage,
@@ -281,6 +282,19 @@ function OrderPage() {
             <h3 className="text-sm font-semibold text-foreground">Adjunta tu comprobante</h3>
             <p className="mt-1 text-xs text-muted-foreground">Escanea el QR del restaurante y deposita. Luego sube la captura del váucher.</p>
           </div>
+          {/* Payment card */}
+          <Card className="mb-4 bg-card/80">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Pago pendiente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm text-muted-foreground">Plato: {order.dish_name}</p>
+              <p className="text-2xl font-bold">{order.final_price ? `S/ ${Number(order.final_price).toFixed(2)}` : 'Pendiente'}</p>
+              <Button onClick={() => { setUploadKind("voucher"); fileRef.current?.click(); }} className="w-full">
+                📸 Subir comprobante de Yape/Plin
+              </Button>
+            </CardContent>
+          </Card>
           {qrUrl && (
             <div className="flex flex-col items-center justify-center p-3 border border-dashed border-border rounded-2xl bg-muted/20 max-w-xs mx-auto">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Código QR de Pago</span>
@@ -289,11 +303,6 @@ function OrderPage() {
               </div>
             </div>
           )}
-          <div className="flex justify-center">
-            <Button className="rounded-full w-full max-w-xs" onClick={() => { setUploadKind("voucher"); fileRef.current?.click(); }}>
-              <Receipt className="mr-1.5 h-4 w-4" /> Subir voucher
-            </Button>
-          </div>
         </div>
       )}
 
