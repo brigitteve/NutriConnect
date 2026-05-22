@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ORDER_STAGES, type OrderStatus } from "@/lib/constants";
-import { useDemoStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   component: OrdersPage,
@@ -12,20 +11,20 @@ export const Route = createFileRoute("/_authenticated/orders")({
 
 function OrdersPage() {
   const { profile } = useAuth();
-  const { view } = useDemoStore();
   const [orders, setOrders] = useState<any[]>([]);
+
+  const effectiveRole = profile?.role ?? "usuario";
 
   useEffect(() => {
     if (!profile) return;
-    const effective = view === "restaurante" ? "restaurante" : view === "cliente" ? "usuario" : profile.role;
-    const col = effective === "restaurante" ? "restaurant_id" : "client_id";
+    const col = effectiveRole === "restaurante" ? "restaurant_id" : "client_id";
     supabase
       .from("orders_chat_hub")
       .select("*")
       .eq(col, profile.id)
       .order("updated_at", { ascending: false })
       .then(({ data }) => setOrders(data ?? []));
-  }, [profile, view]);
+  }, [profile]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">

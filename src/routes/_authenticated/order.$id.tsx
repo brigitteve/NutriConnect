@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PipelineBar } from "@/components/PipelineBar";
 import { toast } from "sonner";
 import type { OrderStatus } from "@/lib/constants";
 import { TAG_LABELS } from "@/lib/constants";
-import { ImagePlus, Send, CheckCircle2, ArrowRight, QrCode, Receipt } from "lucide-react";
+import { ImagePlus, Send, CheckCircle2, ArrowRight, QrCode } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/order/$id")({
   component: OrderPage,
@@ -302,11 +303,6 @@ function OrderPage() {
               </div>
             </div>
           )}
-          <div className="flex justify-center">
-            <Button className="rounded-full w-full max-w-xs" onClick={() => { setUploadKind("voucher"); fileRef.current?.click(); }}>
-              <Receipt className="mr-1.5 h-4 w-4" /> Subir voucher
-            </Button>
-          </div>
         </div>
       )}
 
